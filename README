@@ -1,0 +1,72 @@
+这是 2025 AI+创研课的集中仓库
+Team leader:   刘嘉俊
+Team members:  左宇钒 黄宜君 陈庆笠 钟梓洋 叶栩言
+
+参考的资料：
+
+一文读懂互联网广告拍卖的经典机制设计 - 石士的文章 - 知乎 https://zhuanlan.zhihu.com/p/617582638
+
+Hu, Yudong, Congying Han, Tiande Guo, and Hao Xiao. “Applying Opponent Modeling for Automatic Bidding in Online Repeated Auctions.” arXiv, February 27, 2024. https://doi.org/10.48550/arXiv.2212.02723.
+
+Mou, Zhiyu, Miao Xu, Rongquan Bai, Zhuoran Yang, Chuan Yu, Jian Xu, and Bo Zheng. “Nash Equilibrium Constrained Auto-Bidding With Bi-Level Reinforcement Learning.” arXiv, March 13, 2025. https://doi.org/10.48550/arXiv.2503.10304.
+
+
+1. regret-Net bidding
+2. https://arxiv.org/abs/2409.03052
+3. NIPS - baseline (how to bid) and connect with the former Net
+
+
+
+```
+环境和日志设置:
+导入必要的库，包括 numpy (用于数值计算)，logging (用于记录训练过程信息)，pandas (用于数据处理)，ast (用于安全地转换字符串到 Python 对象) 以及项目内部定义的 IQL 相关模块 (ReplayBuffer, IQL, utils)。
+设置 STATE_DIM = 16，定义了状态空间的维度。
+配置了日志记录的格式和级别。
+train_iql_model() 函数 - 模型训练的核心流程:
+加载数据:
+从 ./data/traffic/training_data_rlData_folder/training_data_all-rlData.csv 文件中读取预处理好的强化学习训练数据。这个数据是 rl_data_generator.py 生成的。
+数据预处理:
+safe_literal_eval 函数：由于 CSV 文件中 state 和 next_state 列可能是以字符串形式存储的列表或元组，该函数使用 ast.literal_eval 将这些字符串安全地转换为 Python 的列表/元组对象。如果转换失败或值为空，则保持原样。
+对 "state" 和 "next_state" 列应用 safe_literal_eval。
+数据归一化 (Normalization):
+is_normalize = True 表明启用了归一化。
+normalize_state(training_data, STATE_DIM, normalize_indices=[13, 14, 15]): 对状态数据进行归一化。特别地，指定了状态向量中的第 13, 14, 15 个特征需要归一化（这些索引对应 historical_volume, last_3_timeStepIndexs_volume, timeStepIndex_volume_agg 等特征，这些特征的值域可能较大）。函数会返回一个包含均值和标准差等信息的字典 normalize_dic，用于后续的归一化和反归一化。
+training_data['reward'] = normalize_reward(training_data, "reward_continuous"): 对奖励进行归一化。这里选择了 reward_continuous (连续奖励) 进行归一化。脚本中注释掉了使用 reward (稀疏奖励) 的选项。
+save_normalize_dict(normalize_dic, "saved_model/IQLtest"): 将归一化过程中产生的字典（包含均值、标准差等）保存到指定路径，以便在模型评估或部署时使用相同的归一化参数。
+构建经验回放缓冲区 (Replay Buffer):
+replay_buffer = ReplayBuffer(): 初始化一个经验回放缓冲区。强化学习中，经验回放缓冲区用于存储智能体与环境交互产生的经验（(状态, 动作, 奖励, 下一个状态, 是否结束)元组），并从中随机采样进行训练，以打破数据相关性，提高训练稳定性。
+add_to_replay_buffer(replay_buffer, training_data, is_normalize): 将处理后的训练数据填充到经验回放缓冲区中。
+模型训练:
+model = IQL(dim_obs=STATE_DIM): 初始化 IQL 模型。dim_obs 参数指定了观测空间（即状态空间）的维度。
+train_model_steps(model, replay_buffer): 调用该函数执行模型的实际训练步骤。
+保存模型:
+model.save_jit("saved_model/IQLtest"): 将训练好的 IQL 模型保存到指定路径。save_jit 可能表示使用了 TorchScript JIT (Just-In-Time) 编译器进行模型序列化，以便于跨平台部署或在没有 Python 环境的情况下运行。
+测试训练好的模型:
+test_trained_model(model, replay_buffer): 调用该函数对训练好的模型进行简单的测试。
+add_to_replay_buffer() 函数 - 填充经验回放缓冲区:
+遍历训练数据中的每一行（每一条经验）。
+根据 is_normalize 的值，选择使用原始的状态/奖励还是归一化后的状态/奖励。
+一个关键点：if done != 1:，当一条经验的结束标志 done 不为 1 时，正常将 (state, action, reward, next_state, done) 推入缓冲区。
+else: 当 done == 1 时，表示这是一个终止状态，此时 next_state 被替换为 np.zeros_like(state)（一个与 state 形状相同的零数组），然后推入缓冲区。这是因为在终止状态之后没有实际的“下一个状态”，通常用零向量或特定标记表示。
+train_model_steps() 函数 - 模型训练步骤:
+step_num=20000, batch_size=100: 定义了训练的总步数和每个批次的大小。
+循环 step_num 次：
+states, actions, rewards, next_states, terminals = replay_buffer.sample(batch_size): 从经验回放缓冲区中随机采样一个批次的数据。
+q_loss, v_loss, a_loss = model.step(states, actions, rewards, next_states, terminals): 执行 IQL 模型的一个训练步骤。IQL 算法通常会同时学习一个 Q 函数 (state-action value), 一个 V 函数 (state value) 和一个隐式的优势函数 (Advantage function, A = Q - V)。model.step() 内部会计算这些函数的损失并进行梯度下降更新。
+logger.info(...): 记录当前训练步数以及 Q 函数损失 (q_loss)、V 函数损失 (v_loss) 和优势函数/策略损失 (a_loss)。
+test_trained_model() 函数 - 测试模型:
+从回放缓冲区中采样一批数据。
+pred_actions = model.take_actions(states): 使用训练好的模型根据当前状态 states 预测动作。
+比较模型预测的动作 pred_actions 和数据中真实的动作 actions，并将它们拼接起来打印输出，用于初步评估模型性能。
+run_iql() 函数和 if __name__ == '__main__'::
+run_iql() 函数简单地调用 train_iql_model() 来启动整个训练流程。
+if __name__ == '__main__': 确保当该脚本作为主程序执行时，会调用 run_iql()。
+总结一下 IQL 方法在这个脚本中的体现：
+离线学习 (Offline Learning): IQL 是一种适用于离线强化学习的算法。这个脚本从一个固定的、预先收集好的数据集 (training_data_all-rlData.csv) 中学习，而不是通过与环境实时交互来学习。
+隐式 Q 学习: IQL 的核心思想是通过学习状态价值函数 (V) 和优势加权回归 (Advantage-Weighted Regression, AWR) 来间接优化策略，而不是直接最大化 Q 值。它期望学习到的策略能够匹配数据集中高回报动作的分布。
+组件: 训练过程涉及了 IQL 的关键组件：
+状态价值函数 (V-function): 评估在某个状态下有多好。
+Q 函数 (Q-function): 评估在某个状态下执行某个动作有多好。
+优势函数 (Advantage Function): 通常 A(s,a) = Q(s,a) - V(s)，表示在状态 s 下执行动作 a 相对于平均水平的好坏程度。IQL 可能以一种隐式的方式使用它。
+损失函数: q_loss, v_loss, a_loss 反映了 IQL 算法中用于更新这些不同函数组件的损失。具体的计算方式在 IQL类的 step 方法中定义（脚本中未提供其内部实现）。
+```
