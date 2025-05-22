@@ -4,11 +4,16 @@ Team members:  左宇钒 黄宜君 陈庆笠 钟梓洋 叶栩言
 
 参考的资料：
 
-一文读懂互联网广告拍卖的经典机制设计 - 石士的文章 - 知乎 https://zhuanlan.zhihu.com/p/617582638
+一文读懂互联网广告拍卖的经典机制设计 - 石士的文章 - 知乎
+https://zhuanlan.zhihu.com/p/617582638
 
-Hu, Yudong, Congying Han, Tiande Guo, and Hao Xiao. “Applying Opponent Modeling for Automatic Bidding in Online Repeated Auctions.” arXiv, February 27, 2024. https://doi.org/10.48550/arXiv.2212.02723.
+Hu, Yudong, Congying Han, Tiande Guo, and Hao Xiao.
+“Applying Opponent Modeling for Automatic Bidding in Online Repeated Auctions.” arXiv, February 27, 2024。
+https://arxiv.org/pdf/2212.02723
 
-Mou, Zhiyu, Miao Xu, Rongquan Bai, Zhuoran Yang, Chuan Yu, Jian Xu, and Bo Zheng. “Nash Equilibrium Constrained Auto-Bidding With Bi-Level Reinforcement Learning.” arXiv, March 13, 2025. https://doi.org/10.48550/arXiv.2503.10304.
+Mou, Zhiyu, Miao Xu, Rongquan Bai, Zhuoran Yang, Chuan Yu, Jian Xu, and Bo Zheng.
+“Nash Equilibrium Constrained Auto-Bidding With Bi-Level Reinforcement Learning.” arXiv, March 13, 2025.
+https://arxiv.org/pdf/2503.10304
 
 
 1. regret-Net bidding
@@ -16,6 +21,74 @@ Mou, Zhiyu, Miao Xu, Rongquan Bai, Zhuoran Yang, Chuan Yu, Jian Xu, and Bo Zheng
 3. NIPS - baseline (how to bid) and connect with the former Net
 
 
+
+
+Some notes:
+
+1. 数据大小大致有80个G
+
+2. > [广告出价策略](https://www.ichdata.com/tag/广告出价策略)可以分为手动出价和智能自动出价。
+   >
+   > ## 手动出价
+   >
+   > ### 基于时间
+   >
+   > - ~~[CPD](https://www.ichdata.com/tag/cpd)：Cost Per Day，每天成本，广告主按天数支付费用，适用于品牌展示广告，提升品牌知名度。实际上这是广告主的**定价**。~~
+   >
+   >  
+   >
+   > ### 基于展示
+   >
+   > - [CPM](https://www.ichdata.com/tag/cpm)：Cost Per Mille, 每千次展示成本，广告主为每1000次广告展示支付固定的费。适用于品牌展示广告，提升品牌知名度
+   >
+   >  
+   >
+   > ### 基于点击
+   >
+   > - [CPC](https://www.ichdata.com/tag/cpc)：Cost Per Click, 每点击成本，广告主只为点击广告的用户付费。适用于直接响应广告，引导流量到网站或特定页面。
+   >
+   >  
+   >
+   > ### 基于行动
+   >
+   > - [CPA](https://www.ichdata.com/tag/cpa)：Cost Per Action, 每行动成本，广告主为每一次特定的用户行为（如注册、购买等）付费。适用于转化目标明确的广告活动，强调效果和ROI。
+   > - CPL：Cost Per Lead, 每潜在客户成本，广告主为每一个潜在客户（比如填写表单的用户）支付费用。适用于需要收集用户信息的营销活动。
+   > - [CPS](https://www.ichdata.com/tag/cps)：Cost Per Sale, 每销售成本，广告主为每笔成功的销售付费。适用于电商或产品销售活动。
+   > - [CPI](https://www.ichdata.com/tag/cpi)： Cost Per Install，每次安装成本，广告主为每次APP安装支付费用。适用于APP下载。
+   > - CPE：Cost Per Engagement，每次互动成本，广告主为特定互动支付费用。适用于电商或产品销售活动。
+   >
+   >  
+   >
+   > ### 基于视频
+   >
+   > - CPV：Cost Per View, 每观看成本，通常用于视频广告，广告主支付每个视频观看的费用。适用于视频营销活动，注重视频内容的传播。
+   > - t[CPM](https://www.ichdata.com/tag/cpm)：Target cost-per-thousand impressions，目标每千次展示费用，可以设定你愿意为每一千次展示支付的平均金额。此出价策略会优化出价，以便最大限度地扩大广告系列的唯一身份用户覆盖面。这种主要在Youtube上，
+   > - [vCPM](https://www.ichdata.com/tag/vcpm)：Viewable Cost Per Mille, 可视每千次展示成本，类似于[CPM](https://www.ichdata.com/tag/cpm)，但根据广告的可见性（如至少50%的广告曝光时间在屏幕上）来计算。适用于关注广告实际视觉效果的品牌广告。
+   >
+   >  
+   >
+   > ## 智能自动出价
+   >
+   > 智能出价是一种出价策略，它会在每一次竞价时使用算反，以尽可能提高转化次数或转化价值为目标来优化出价，往往需要积累一定的数据（转化）后才可以开启。
+   >
+   > - o[CPM](https://www.ichdata.com/tag/cpm)：Optimized Cost Per Mille, 优化每千次展示成本，选择特定优化目标，并提供期望平均转化成本后，系统预估每一次展示的转化价值，自动出价，按照展示扣费。适用于希望在展示广告中实现特定性能目标。
+   > - [dCPM](https://www.ichdata.com/tag/dcpm)：Dynamic Cost Per Mille, 动态每千次展示成本，主要在DSP中使用，出价根据实时数据动态调整，每千次展示的成本可以根据用户价值变化。适用于结合程序化广告和实时竞价，需要精细化广告投放。
+   > - e[CPC](https://www.ichdata.com/tag/cpc)：Enhanced Cost Per Click, 增强每点击成本，属于半智能出价，在[CPC](https://www.ichdata.com/tag/cpc)基础上，系统自动调整出价以优化点击率或转化。适用于需要在预算内最大化点击量或转化的广告主。
+   > - o[CPC](https://www.ichdata.com/tag/cpc)：Optimized Cost Per Click，优化版[CPC](https://www.ichdata.com/tag/cpc)，属于智能自动出价，选择特定优化目标，并提供期望平均转化成本后，系统预估每一次展示的转化价值，自动出价，按照点击扣费。
+   > - [oCPA](https://www.ichdata.com/tag/ocpa)：Optimized [CPA](https://www.ichdata.com/tag/cpa)，优化版[CPA](https://www.ichdata.com/tag/cpa)，属于智能自动出价，在保障转化成本的前提下，系统依据用户对广告主的价值及竞争环境，自主出价。
+   > - ROAS：Return On Ad Spend, 广告支出回报率（不是一种出价策略，但可以用来设定目标），根据设定的广告支出回报率目标来调整出价，Ads将ROAS划分到智能自动出价策略。适用于需要关注广告支出的直接回报的广告主，特别是在电商领域。
+   >
+   > 手动出价和智能自动出价的关系如下：
+   >
+   > |                      **售卖方式**                       |                         **出价策略**                         |                                                              |
+   > | :-----------------------------------------------------: | :----------------------------------------------------------: | ------------------------------------------------------------ |
+   > |                      **手动出价**                       |                       **智能自动出价**                       |                                                              |
+   > |                  CPT（Cost Per Time）                   | ~~[CPD](https://www.ichdata.com/tag/cpd)（Cost Per Day）这实际是广告主定价~~ |                                                              |
+   > | [PPM](https://www.ichdata.com/tag/ppm)（Pay Per Mille） |   [CPM](https://www.ichdata.com/tag/cpm)（Cost Per Mille）   | o[CPM](https://www.ichdata.com/tag/cpm)（Optimized Cost Per Mille） [dCPM](https://www.ichdata.com/tag/dcpm)（Dynamic Cost Per Mille） |
+   > | [PPC](https://www.ichdata.com/tag/ppc)（Pay Per Click） |   [CPC](https://www.ichdata.com/tag/cpc)（Cost Per Click）   | e[CPC](https://www.ichdata.com/tag/cpc)（Enhanced Cost Per Click） o[CPC](https://www.ichdata.com/tag/cpc)（Optimized Cost Per Click） |
+   > |                  PPA（Pay Per Action）                  | [CPA](https://www.ichdata.com/tag/cpa)（Cost Per Action） [CPD](https://www.ichdata.com/tag/cpd)(Cost Per Download) [CPI](https://www.ichdata.com/tag/cpi)(Cost Per Install) [CPS](https://www.ichdata.com/tag/cps)(Cost Per Sales) | [oCPA](https://www.ichdata.com/tag/ocpa)（Optimized Cost Per Action） |
+   >
+   > 延伸阅读：[深入解析：CPC、eCPC与oCPC——广告出价策略的演进](https://www.ichdata.com/cpc-ecpc-ocpc.html)
 
 ```
 环境和日志设置:
